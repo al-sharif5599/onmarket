@@ -73,7 +73,7 @@ WSGI_APPLICATION = 'online_shop.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'online_shop_db'),
+        'NAME': os.getenv('DB_NAME', 'onmarket_db'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'Al sharif'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
