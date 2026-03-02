@@ -22,6 +22,8 @@ class Product(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
     price = models.DecimalField(max_digits=12, decimal_places=2)
+    image = models.ImageField(upload_to="products/images/", blank=True, null=True)
+    video = models.FileField(upload_to="products/videos/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 

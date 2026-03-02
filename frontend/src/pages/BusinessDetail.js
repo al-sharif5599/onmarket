@@ -66,6 +66,21 @@ const BusinessDetail = () => {
       </Link>
 
       <div className="card p-3">
+        {product.image_url && (
+          <img
+            src={product.image_url}
+            alt={product.name}
+            style={{ width: '100%', maxHeight: '420px', objectFit: 'cover', borderRadius: '12px', marginBottom: '16px' }}
+          />
+        )}
+
+        {product.video_url && (
+          <video controls style={{ width: '100%', borderRadius: '12px', marginBottom: '16px' }}>
+            <source src={product.video_url} />
+            Your browser does not support video.
+          </video>
+        )}
+
         <h1 className="mb-2">{product.name}</h1>
         <p className="mb-3">{product.description}</p>
         <p className="mb-2">

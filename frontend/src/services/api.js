@@ -58,8 +58,14 @@ export const authAPI = {
 export const productsAPI = {
   list: (params) => api.get('/products/', { params }),
   detail: (id) => api.get(`/products/${id}/`),
-  create: (data) => api.post('/products/', data),
-  update: (id, data) => api.patch(`/products/${id}/`, data),
+  create: (data) =>
+    api.post('/products/', data, data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {}),
+  update: (id, data) =>
+    api.patch(
+      `/products/${id}/`,
+      data,
+      data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {}
+    ),
   remove: (id) => api.delete(`/products/${id}/`),
   myProducts: () => api.get('/products/my/'),
 };

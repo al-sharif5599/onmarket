@@ -6,17 +6,47 @@ from .models import Order, Product
 
 class ProductSerializer(serializers.ModelSerializer):
     posted_by = UserSerializer(read_only=True)
+    image_url = serializers.SerializerMethodField()
+    video_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ["id", "name", "description", "price", "status", "created_at", "posted_by"]
-        read_only_fields = ["id", "status", "created_at", "posted_by"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "price",
+            "image",
+            "video",
+            "image_url",
+            "video_url",
+            "status",
+            "created_at",
+            "posted_by",
+        ]
+        read_only_fields = ["id", "status", "created_at", "posted_by", "image_url", "video_url"]
+
+    def get_image_url(self, obj):
+        if not obj.image:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
+
+    def get_video_url(self, obj):
+        if not obj.video:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.video.url)
+        return obj.video.url
 
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ["name", "description", "price"]
+        fields = ["name", "description", "price", "image", "video"]
 
 
 class ProductAdminActionSerializer(serializers.ModelSerializer):

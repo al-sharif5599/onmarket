@@ -60,6 +60,28 @@ const BusinessList = () => {
         <div className="grid grid-3">
           {products.map((product) => (
             <Link key={product.id} to={`/products/${product.id}`} className="business-card">
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="business-image"
+                  style={{ height: '220px' }}
+                />
+              ) : (
+                <div
+                  style={{
+                    height: '220px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    fontWeight: 600,
+                  }}
+                >
+                  {product.video_url ? 'Video Product' : 'No Media'}
+                </div>
+              )}
               <div className="business-content">
                 <h3 className="business-name">{product.name}</h3>
                 <p className="business-description">{product.description}</p>
