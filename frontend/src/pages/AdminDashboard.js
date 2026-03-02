@@ -1,29 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { adminAPI } from '../services/api';
+
+import { adminAPI, ordersAPI } from '../services/api';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
+    total_products: 0,
+    pending_products: 0,
+    approved_products: 0,
+    total_orders: 0,
   });
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchStatistics();
-  }, []);
-
-  const fetchStatistics = async () => {
+  const fetchData = async () => {
     try {
-      const response = await adminAPI.getStatistics();
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
+      const [statsResponse, ordersResponse] = await Promise.all([adminAPI.stats(), ordersAPI.list()]);
+      setStats(statsResponse.data);
+      setOrders(ordersResponse.data.results || ordersResponse.data);
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleDeleteOrder = async (id) => {
+    await ordersAPI.remove(id);
+    setOrders((prev) => prev.filter((order) => order.id !== id));
+    setStats((prev) => ({ ...prev, total_orders: Math.max(prev.total_orders - 1, 0) }));
   };
 
   if (loading) {
@@ -38,104 +45,57 @@ const AdminDashboard = () => {
 
   return (
     <div className="container" style={{ padding: '48px 0' }}>
-      <h1 className="mb-4">Admin Dashboard</h1>
+      <h1 className="mb-3">Admin Dashboard</h1>
 
-      {/* Statistics Cards */}
       <div className="grid grid-4 mb-4">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--primary)' }}>
-            📊
-          </div>
-          <div className="stat-content">
-            <h3>{stats.total}</h3>
-            <p className="text-muted">Total Businesses</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--warning)' }}>
-            ⏳
-          </div>
-          <div className="stat-content">
-            <h3>{stats.pending}</h3>
-            <p className="text-muted">Pending Approval</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--success)' }}>
-            ✓
-          </div>
-          <div className="stat-content">
-            <h3>{stats.approved}</h3>
-            <p className="text-muted">Approved</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--error)' }}>
-            ✕
-          </div>
-          <div className="stat-content">
-            <h3>{stats.rejected}</h3>
-            <p className="text-muted">Rejected</p>
-          </div>
-        </div>
+        <div className="stat-card"><div className="stat-content"><h3>{stats.total_products}</h3><p>Total products</p></div></div>
+        <div className="stat-card"><div className="stat-content"><h3>{stats.pending_products}</h3><p>Pending products</p></div></div>
+        <div className="stat-card"><div className="stat-content"><h3>{stats.approved_products}</h3><p>Approved products</p></div></div>
+        <div className="stat-card"><div className="stat-content"><h3>{stats.total_orders}</h3><p>Total orders</p></div></div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-2 mb-4">
-        <div className="card">
-          <h3>Business Management</h3>
-          <div className="d-flex flex-column gap-2 mt-3">
-            <Link to="/admin/pending" className="btn btn-outline">
-              View Pending Approvals ({stats.pending})
-            </Link>
-            <Link to="/create-business" className="btn btn-outline">
-              Post New Business
-            </Link>
-          </div>
-        </div>
-
-        <div className="card">
-          <h3>User Management</h3>
-          <div className="d-flex flex-column gap-2 mt-3">
-            <Link to="/admin/users" className="btn btn-outline">
-              Manage Users
-            </Link>
-            <Link to="/admin/businesses" className="btn btn-outline">
-              All Businesses
-            </Link>
-          </div>
-        </div>
+      <div className="d-flex gap-2 mb-3">
+        <Link to="/admin/pending" className="btn btn-outline">Review Pending Products</Link>
+        <Link to="/admin/users" className="btn btn-outline">Manage Customers</Link>
       </div>
 
-      {/* Recent Activity */}
-      <div className="card">
-        <h3>Quick Overview</h3>
-        <div className="mt-3">
-          <div className="d-flex justify-between align-center py-2 border-bottom">
-            <span>Total Businesses</span>
-            <strong>{stats.total}</strong>
-          </div>
-          <div className="d-flex justify-between align-center py-2 border-bottom">
-            <span>Approval Rate</span>
-            <strong>
-              {stats.total > 0
-                ? ((stats.approved / stats.total) * 100).toFixed(1)
-                : 0}%
-            </strong>
-          </div>
-          <div className="d-flex justify-between align-center py-2">
-            <span>Pending Rate</span>
-            <strong>
-              {stats.total > 0
-                ? ((stats.pending / stats.total) * 100).toFixed(1)
-                : 0}%
-            </strong>
-          </div>
+      <h2 className="mb-2">All Orders</h2>
+      {orders.length === 0 ? (
+        <div className="card p-3">No orders found.</div>
+      ) : (
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Product</th>
+                <th>Customer</th>
+                <th>Quantity</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id}>
+                  <td>#{order.id}</td>
+                  <td>{order.product?.name}</td>
+                  <td>{order.customer?.username}</td>
+                  <td>{order.quantity}</td>
+                  <td>{order.order_status}</td>
+                  <td>{new Date(order.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <button className="btn btn-sm btn-danger" onClick={() => handleDeleteOrder(order.id)}>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
     </div>
   );
 };

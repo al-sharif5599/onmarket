@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+import { authAPI } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -14,77 +15,62 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(localStorage.getItem('token'));
 
   useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      fetchUser();
-    } else {
+    const token = localStorage.getItem('token');
+    if (!token) {
       setLoading(false);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
 
-  const fetchUser = async () => {
-    try {
-      const response = await api.get('/auth/user/');
-      setUser(response.data);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      logout();
-    } finally {
-      setLoading(false);
+    authAPI.me()
+      .then((response) => setUser(response.data))
+      .catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refresh');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const login = async (username, password) => {
+    const response = await authAPI.login({ username, password });
+    localStorage.setItem('token', response.data.tokens.access);
+    localStorage.setItem('refresh', response.data.tokens.refresh);
+    setUser(response.data.user);
+  };
+
+  const register = async (payload) => {
+    const response = await authAPI.register(payload);
+    localStorage.setItem('token', response.data.tokens.access);
+    localStorage.setItem('refresh', response.data.tokens.refresh);
+    setUser(response.data.user);
+  };
+
+  const logout = async () => {
+    const refresh = localStorage.getItem('refresh');
+    if (refresh) {
+      try {
+        await authAPI.logout(refresh);
+      } catch {
+        // Ignore logout API errors and clear local session.
+      }
     }
-  };
 
-  const login = async (email, password) => {
-    const response = await api.post('/auth/login/', { email, password });
-    const { tokens, user: userData } = response.data;
-    
-    localStorage.setItem('token', tokens.access);
-    localStorage.setItem('refresh', tokens.refresh);
-    setToken(tokens.access);
-    setUser(userData);
-    
-    return response.data;
-  };
-
-  const register = async (userData) => {
-    const response = await api.post('/auth/register/', userData);
-    const { tokens, user: newUser } = response.data;
-    
-    localStorage.setItem('token', tokens.access);
-    localStorage.setItem('refresh', tokens.refresh);
-    setToken(tokens.access);
-    setUser(newUser);
-    
-    return response.data;
-  };
-
-  const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('refresh');
-    setToken(null);
     setUser(null);
-    delete api.defaults.headers.common['Authorization'];
   };
 
   const value = {
     user,
-    token,
     loading,
+    isAuthenticated: !!user,
+    isAdmin: user?.role === 'admin',
+    isCustomer: user?.role === 'customer',
     login,
     register,
     logout,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === 'admin' || user?.is_staff,
-    isCustomer: user?.role === 'customer',
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

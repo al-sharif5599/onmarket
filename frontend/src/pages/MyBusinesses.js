@@ -1,54 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { businessesAPI } from '../services/api';
+import React, { useEffect, useState } from 'react';
+
+import { productsAPI } from '../services/api';
 
 const MyBusinesses = () => {
-  const [businesses, setBusinesses] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({ name: '', description: '', price: '' });
   const [error, setError] = useState('');
-  const [deleteModal, setDeleteModal] = useState({ show: false, id: null });
-  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchMyBusinesses();
-  }, []);
-
-  const fetchMyBusinesses = async () => {
+  const fetchProducts = async () => {
+    setLoading(true);
     try {
-      const response = await businessesAPI.getMyBusinesses();
-      setBusinesses(response.data);
-    } catch (error) {
-      setError('Failed to load your businesses');
-      console.error('Error fetching businesses:', error);
+      const response = await productsAPI.myProducts();
+      setProducts(response.data.results || response.data);
+    } catch {
+      setError('Failed to load products.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!deleteModal.id) return;
-    
-    setDeleting(true);
-    try {
-      await businessesAPI.delete(deleteModal.id);
-      setBusinesses(businesses.filter(b => b.id !== deleteModal.id));
-      setDeleteModal({ show: false, id: null });
-      alert('Business deleted successfully');
-    } catch (error) {
-      alert('Failed to delete business');
-      console.error('Error deleting business:', error);
-    } finally {
-      setDeleting(false);
-    }
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const startEdit = (product) => {
+    setEditingId(product.id);
+    setEditData({ name: product.name, description: product.description, price: product.price });
   };
 
-  const getStatusBadge = (status) => {
-    const statusClasses = {
-      pending: 'badge-warning',
-      approved: 'badge-success',
-      rejected: 'badge-error',
-    };
-    return `badge ${statusClasses[status] || 'badge-default'}`;
+  const saveEdit = async () => {
+    try {
+      await productsAPI.update(editingId, editData);
+      setEditingId(null);
+      fetchProducts();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to update product.');
+    }
   };
 
   if (loading) {
@@ -63,83 +52,36 @@ const MyBusinesses = () => {
 
   return (
     <div className="container" style={{ padding: '48px 0' }}>
-      <div className="d-flex justify-between align-center mb-4">
-        <h1>My Businesses</h1>
-        <Link to="/create-business" className="btn btn-primary">
-          + Add New Business
-        </Link>
-      </div>
+      <h1 className="mb-3">My Products</h1>
+      {error && <div className="alert alert-error">{error}</div>}
 
-      {error && <div className="alert alert-error mb-3">{error}</div>}
-
-      {businesses.length === 0 ? (
-        <div className="card text-center p-5">
-          <h3>No businesses yet</h3>
-          <p className="text-muted">Start by creating your first business listing</p>
-          <Link to="/create-business" className="btn btn-primary mt-3">
-            Create Your First Business
-          </Link>
-        </div>
+      {products.length === 0 ? (
+        <div className="card p-3">No products submitted yet.</div>
       ) : (
         <div className="table-container">
           <table className="table">
             <thead>
               <tr>
-                <th>Business</th>
-                <th>Category</th>
+                <th>Name</th>
                 <th>Price</th>
                 <th>Status</th>
-                <th>Views</th>
                 <th>Created</th>
-                <th>Actions</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {businesses.map((business) => (
-                <tr key={business.id}>
+              {products.map((product) => (
+                <tr key={product.id}>
+                  <td>{product.name}</td>
+                  <td>{Number(product.price).toLocaleString()} TZS</td>
+                  <td>{product.status}</td>
+                  <td>{new Date(product.created_at).toLocaleDateString()}</td>
                   <td>
-                    <div className="d-flex align-center gap-2">
-                      {business.primary_image && (
-                        <img
-                          src={business.primary_image}
-                          alt={business.name}
-                          className="table-thumbnail"
-                        />
-                      )}
-                      <div>
-                        <Link to={`/businesses/${business.id}`} className="text-primary">
-                          <strong>{business.name}</strong>
-                        </Link>
-                        <p className="text-muted mb-0" style={{ fontSize: '12px' }}>
-                          {business.description?.substring(0, 50)}...
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{business.category?.name || '-'}</td>
-                  <td>${business.price || '-'}</td>
-                  <td>
-                    <span className={getStatusBadge(business.status)}>
-                      {business.status}
-                    </span>
-                  </td>
-                  <td>{business.views}</td>
-                  <td>{new Date(business.created_at).toLocaleDateString()}</td>
-                  <td>
-                    <div className="d-flex gap-2">
-                      <Link
-                        to={`/businesses/${business.id}`}
-                        className="btn btn-sm btn-outline"
-                      >
-                        View
-                      </Link>
-                      <button
-                        className="btn btn-sm btn-error"
-                        onClick={() => setDeleteModal({ show: true, id: business.id })}
-                      >
-                        Delete
+                    {product.status === 'pending' && (
+                      <button className="btn btn-sm btn-outline" onClick={() => startEdit(product)}>
+                        Edit
                       </button>
-                    </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -148,23 +90,42 @@ const MyBusinesses = () => {
         </div>
       )}
 
-      {deleteModal.show && (
+      {editingId && (
         <div className="modal-overlay">
           <div className="modal">
-            <h3>Confirm Delete</h3>
-            <p>Are you sure you want to delete this business? This action cannot be undone.</p>
-            <div className="modal-actions">
-              <button
-                className="btn btn-error"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? 'Deleting...' : 'Delete'}
+            <div className="modal-body">
+              <h3 className="mb-2">Edit Pending Product</h3>
+              <div className="form-group">
+                <label className="form-label">Name</label>
+                <input
+                  className="form-control"
+                  value={editData.name}
+                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-control"
+                  value={editData.description}
+                  onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Price</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={editData.price}
+                  onChange={(e) => setEditData({ ...editData, price: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={saveEdit}>
+                Save
               </button>
-              <button
-                className="btn btn-outline"
-                onClick={() => setDeleteModal({ show: false, id: null })}
-              >
+              <button className="btn btn-outline" onClick={() => setEditingId(null)}>
                 Cancel
               </button>
             </div>

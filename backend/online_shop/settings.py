@@ -30,8 +30,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'django_extensions',
-    'imagekit',
     
     # Local apps
     'accounts',
@@ -107,7 +105,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files (Images, Videos)
+# Media files
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -141,10 +139,3 @@ SIMPLE_JWT = {
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
-# ImageKit Configuration
-IMAGEKIT_DEFAULT_CACHEFILE_STORAGE = 'django.core.files.storage.DefaultStorage'
-IMAGEKIT_PROCESSORS = {
-    'thumbnail': 'imagekit.processors.resize.Thumbnail',
-    'preview': 'imagekit.processors.resize.ResizeToFit',
-}

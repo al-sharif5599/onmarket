@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { isAdmin, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -19,23 +20,34 @@ const Navbar = () => {
         </Link>
 
         <div className="navbar-menu">
-          <Link to="/businesses" className="navbar-item">
-            Businesses
+          <Link to="/products" className="navbar-item">
+            Products
           </Link>
-          
+
           {isAuthenticated && !isAdmin && (
-            <Link to="/create-business" className="navbar-item">
-              Post Business
-            </Link>
+            <>
+              <Link to="/products/new" className="navbar-item">
+                Submit Product
+              </Link>
+              <Link to="/my-products" className="navbar-item">
+                My Products
+              </Link>
+              <Link to="/my-orders" className="navbar-item">
+                My Orders
+              </Link>
+            </>
           )}
-          
+
           {isAdmin && (
             <>
               <Link to="/admin" className="navbar-item">
-                Dashboard
+                Admin Dashboard
               </Link>
               <Link to="/admin/pending" className="navbar-item">
-                Pending
+                Pending Products
+              </Link>
+              <Link to="/admin/users" className="navbar-item">
+                Customers
               </Link>
             </>
           )}
@@ -43,17 +55,9 @@ const Navbar = () => {
 
         <div className="navbar-actions">
           {isAuthenticated ? (
-            <>
-              <Link to="/my-businesses" className="navbar-item">
-                My Businesses
-              </Link>
-              <span className={`badge badge-${user?.role}`}>
-                {user?.username}
-              </span>
-              <button onClick={handleLogout} className="btn btn-outline btn-sm">
-                Logout
-              </button>
-            </>
+            <button onClick={handleLogout} className="btn btn-outline btn-sm">
+              Logout
+            </button>
           ) : (
             <>
               <Link to="/login" className="btn btn-outline btn-sm">

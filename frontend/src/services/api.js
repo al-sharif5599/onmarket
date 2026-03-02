@@ -9,102 +9,71 @@ const api = axios.create({
   },
 });
 
-// Add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
-// Handle response errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
+
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
-      
+
       try {
         const refresh = localStorage.getItem('refresh');
-        const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
-          refresh,
-        });
-        
+        if (!refresh) {
+          throw new Error('No refresh token');
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, { refresh });
         localStorage.setItem('token', response.data.access);
         originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
-        
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         localStorage.removeItem('token');
         localStorage.removeItem('refresh');
         window.location.href = '/login';
-        return Promise.reject(refreshError);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
 
 export default api;
 
-// Auth API
 export const authAPI = {
-  login: (data) => api.post('/auth/login/', data),
   register: (data) => api.post('/auth/register/', data),
+  login: (data) => api.post('/auth/login/', data),
   logout: (refresh) => api.post('/auth/logout/', { refresh }),
-  getUser: () => api.get('/auth/user/'),
-  updateProfile: (data) => api.patch('/auth/profile/', data),
-  changePassword: (data) => api.post('/auth/change-password/', data),
+  me: () => api.get('/auth/user/'),
 };
 
-// Businesses API
-export const businessesAPI = {
-  getAll: (params) => api.get('/businesses/', { params }),
-  getById: (id) => api.get(`/businesses/${id}/`),
-  create: (data) => api.post('/businesses/', data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  update: (id, data) => api.patch(`/businesses/${id}/`, data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  delete: (id) => api.delete(`/businesses/${id}/`),
-  getMyBusinesses: () => api.get('/businesses/my_businesses/'),
-  uploadImage: (id, formData) => api.post(`/businesses/${id}/upload_image/`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  uploadVideo: (id, formData) => api.post(`/businesses/${id}/upload_video/`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
-  addReview: (id, data) => api.post(`/businesses/${id}/add_review/`, data),
+export const productsAPI = {
+  list: (params) => api.get('/products/', { params }),
+  detail: (id) => api.get(`/products/${id}/`),
+  create: (data) => api.post('/products/', data),
+  update: (id, data) => api.patch(`/products/${id}/`, data),
+  remove: (id) => api.delete(`/products/${id}/`),
+  myProducts: () => api.get('/products/my/'),
 };
 
-// Categories API
-export const categoriesAPI = {
-  getAll: () => api.get('/categories/'),
-  getById: (id) => api.get(`/categories/${id}/`),
-  create: (data) => api.post('/categories/', data),
-  update: (id, data) => api.patch(`/categories/${id}/`, data),
-  delete: (id) => api.delete(`/categories/${id}/`),
+export const ordersAPI = {
+  list: () => api.get('/orders/'),
+  create: (data) => api.post('/orders/', data),
+  remove: (id) => api.delete(`/orders/${id}/`),
 };
 
-// Admin API
 export const adminAPI = {
-  getBusinesses: (params) => api.get('/admin/businesses/', { params }),
-  approveBusiness: (id) => api.post(`/admin/businesses/${id}/approve/`),
-  rejectBusiness: (id) => api.post(`/admin/businesses/${id}/reject/`),
-  featureBusiness: (id) => api.post(`/admin/businesses/${id}/feature/`),
-  getPending: () => api.get('/admin/businesses/pending/'),
-  getStatistics: () => api.get('/admin/businesses/statistics/'),
-  getUsers: (params) => api.get('/auth/users/', { params }),
-  updateUser: (id, data) => api.patch(`/auth/users/${id}/`, data),
+  stats: () => api.get('/admin/statistics/'),
+  approveProduct: (id) => api.post(`/admin/products/${id}/approve/`),
+  rejectProduct: (id) => api.post(`/admin/products/${id}/reject/`),
+  users: () => api.get('/auth/users/'),
   deleteUser: (id) => api.delete(`/auth/users/${id}/`),
 };

@@ -1,25 +1,20 @@
-"""
-Accounts admin configuration.
-"""
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+
 from .models import User
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Admin configuration for User model."""
-    list_display = ['username', 'email', 'role', 'is_staff', 'is_active', 'created_at']
-    list_filter = ['role', 'is_staff', 'is_active', 'created_at']
-    search_fields = ['username', 'email', 'phone']
-    ordering = ['-created_at']
-    
+    list_display = ["username", "email", "role", "is_staff", "is_active", "date_joined"]
+    list_filter = ["role", "is_staff", "is_active", "date_joined"]
+    search_fields = ["username", "email"]
+    ordering = ["-date_joined"]
+
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('Additional Info', {'fields': ('role', 'phone', 'address', 'profile_image')}),
+        ("Role", {"fields": ("role",)}),
     )
-    
+
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Additional Info', {'fields': ('role', 'phone', 'address')}),
+        ("Role", {"fields": ("role", "email")}),
     )
-    
-    readonly_fields = ['created_at', 'updated_at']

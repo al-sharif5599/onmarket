@@ -1,71 +1,92 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 
-// Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import BusinessList from './pages/BusinessList';
-import BusinessDetail from './pages/BusinessDetail';
-import CreateBusiness from './pages/CreateBusiness';
-import MyBusinesses from './pages/MyBusinesses';
-import AdminDashboard from './pages/AdminDashboard';
-import PendingApprovals from './pages/PendingApprovals';
-import UserManagement from './pages/UserManagement';
-
-// Components
+import AdminRoute from './components/AdminRoute';
 import Navbar from './components/Navbar';
 import PrivateRoute from './components/PrivateRoute';
-import AdminRoute from './components/AdminRoute';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import AdminDashboard from './pages/AdminDashboard';
+import BusinessDetail from './pages/BusinessDetail';
+import BusinessList from './pages/BusinessList';
+import CreateBusiness from './pages/CreateBusiness';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import MyBusinesses from './pages/MyBusinesses';
+import Register from './pages/Register';
+import UserManagement from './pages/UserManagement';
+import PendingApprovals from './pages/PendingApprovals';
+import MyOrders from './pages/MyOrders';
+
+function AdminLanding() {
+  const { isAdmin } = useAuth();
+  return isAdmin ? <Navigate to="/admin" replace /> : <Navigate to="/products" replace />;
+}
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="app">
-          <Navbar />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/businesses" element={<BusinessList />} />
-            <Route path="/businesses/:id" element={<BusinessDetail />} />
-            
-            {/* Protected Routes - Customer */}
-            <Route path="/create-business" element={
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/products" element={<BusinessList />} />
+          <Route path="/products/:id" element={<BusinessDetail />} />
+
+          <Route
+            path="/products/new"
+            element={
               <PrivateRoute>
                 <CreateBusiness />
               </PrivateRoute>
-            } />
-            <Route path="/my-businesses" element={
+            }
+          />
+          <Route
+            path="/my-products"
+            element={
               <PrivateRoute>
                 <MyBusinesses />
               </PrivateRoute>
-            } />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={
+            }
+          />
+          <Route
+            path="/my-orders"
+            element={
+              <PrivateRoute>
+                <MyOrders />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
-            } />
-            <Route path="/admin/pending" element={
+            }
+          />
+          <Route
+            path="/admin/pending"
+            element={
               <AdminRoute>
                 <PendingApprovals />
               </AdminRoute>
-            } />
-            <Route path="/admin/users" element={
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
               <AdminRoute>
                 <UserManagement />
               </AdminRoute>
-            } />
-            
-            {/* Catch all - redirect to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
+            }
+          />
+
+          <Route path="/dashboard" element={<AdminLanding />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </Router>
     </AuthProvider>
   );
