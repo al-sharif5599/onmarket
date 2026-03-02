@@ -51,3 +51,34 @@ class AuthApiTests(APITestCase):
         admin_response = self.client.get("/api/auth/users/")
         self.assertEqual(admin_response.status_code, status.HTTP_200_OK)
         self.assertEqual(admin_response.data["count"], 1)
+
+    def test_only_admin_can_create_customer(self):
+        admin = User.objects.create_user(
+            username="admin2",
+            email="admin2@example.com",
+            password="StrongPass123!",
+            role="admin",
+            is_staff=True,
+            is_superuser=True,
+        )
+        customer = User.objects.create_user(
+            username="customer3",
+            email="customer3@example.com",
+            password="StrongPass123!",
+            role="customer",
+        )
+        payload = {
+            "username": "created_by_admin",
+            "email": "created_by_admin@example.com",
+            "password": "StrongPass123!",
+            "confirm_password": "StrongPass123!",
+        }
+
+        self.client.force_authenticate(user=customer)
+        forbidden_response = self.client.post("/api/auth/users/create/", payload, format="json")
+        self.assertEqual(forbidden_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.client.force_authenticate(user=admin)
+        created_response = self.client.post("/api/auth/users/create/", payload, format="json")
+        self.assertEqual(created_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(created_response.data["user"]["role"], "customer")

@@ -56,6 +56,7 @@ const AdminDashboard = () => {
 
       <div className="d-flex gap-2 mb-3">
         <Link to="/admin/pending" className="btn btn-outline">Review Pending Products</Link>
+        <Link to="/products/new" className="btn btn-outline">Post Product</Link>
         <Link to="/admin/users" className="btn btn-outline">Manage Customers</Link>
       </div>
 

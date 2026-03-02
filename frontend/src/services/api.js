@@ -75,5 +75,6 @@ export const adminAPI = {
   approveProduct: (id) => api.post(`/admin/products/${id}/approve/`),
   rejectProduct: (id) => api.post(`/admin/products/${id}/reject/`),
   users: () => api.get('/auth/users/'),
+  createUser: (data) => api.post('/auth/users/create/', data),
   deleteUser: (id) => api.delete(`/auth/users/${id}/`),
 };

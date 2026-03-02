@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import LoginSerializer, UserRegistrationSerializer, UserSerializer
+from .serializers import AdminCreateUserSerializer, LoginSerializer, UserRegistrationSerializer, UserSerializer
 
 User = get_user_model()
 
@@ -104,3 +104,20 @@ class UserDetailView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return User.objects.filter(role=User.ROLE_CUSTOMER)
+
+
+class AdminCreateUserView(generics.CreateAPIView):
+    serializer_class = AdminCreateUserSerializer
+    permission_classes = [IsAdminRole]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "message": "Customer created successfully",
+            },
+            status=status.HTTP_201_CREATED,
+        )

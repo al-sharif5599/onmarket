@@ -43,6 +43,9 @@ const Navbar = () => {
               <Link to="/admin" className="navbar-item">
                 Admin Dashboard
               </Link>
+              <Link to="/products/new" className="navbar-item">
+                Post Product
+              </Link>
               <Link to="/admin/pending" className="navbar-item">
                 Pending Products
               </Link>
