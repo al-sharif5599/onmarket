@@ -15,7 +15,15 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-onmarket-2024-secure-key-c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+def env_list(name, default=""):
+    raw_value = os.getenv(name, default)
+    return [item.strip() for item in raw_value.split(",") if item.strip()]
+
+
+ALLOWED_HOSTS = env_list(
+    "ALLOWED_HOSTS",
+    "localhost,127.0.0.1,onmarket-3.onrender.com,onmarket-backend.onrender.com",
+)
 
 # Application definition
 INSTALLED_APPS = [
@@ -137,6 +145,15 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS / CSRF Configuration
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False") == "True"
+CORS_ALLOWED_ORIGINS = env_list(
+    "CORS_ALLOWED_ORIGINS",
+    "https://onmarket-frontend.onrender.com,https://onmarket.vercel.app,http://localhost:3000",
+)
+
+CSRF_TRUSTED_ORIGINS = env_list(
+    "CSRF_TRUSTED_ORIGINS",
+    "https://onmarket-3.onrender.com,https://onmarket-frontend.onrender.com,https://onmarket.vercel.app,http://localhost:3000",
+)
