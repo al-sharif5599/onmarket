@@ -31,3 +31,8 @@
 - [x] frontend/src/pages/BusinessDetail.js - Improved gallery and videos
 - [x] frontend/src/pages/CreateBusiness.js - Better image/video preview
 - [x] frontend/src/components/Navbar.js - Updated labels
+
+## 5. Fix Render Deployment ✅
+- [x] Create render.yaml to configure deployment with backend/ as root directory
+- [x] Update startCommand to use correct paths (cd backend && gunicorn online_shop.wsgi:application)
+- [x] Set WEB_CONCURRENCY=1 based on available CPUs
