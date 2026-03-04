@@ -20,5 +20,6 @@ urlpatterns = [
     path("api/", include("businesses.urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploaded media files.
+# On Render this allows direct access to files saved under MEDIA_ROOT.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
