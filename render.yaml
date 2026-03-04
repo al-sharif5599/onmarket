@@ -3,6 +3,10 @@ services:
     name: onmarket-backend
     env: python
     region: oregon
+    disk:
+      name: onmarket-media
+      mountPath: /var/data
+      sizeGB: 1
     buildCommand: cd backend && pip install -r requirements.txt
     startCommand: cd backend && python manage.py collectstatic --noinput && python manage.py migrate && gunicorn online_shop.wsgi:application --workers 2 --bind 0.0.0.0:$PORT
     envVars:
@@ -18,6 +22,8 @@ services:
         sync: false
       - key: DEBUG
         value: "False"
+      - key: MEDIA_ROOT
+        value: "/var/data/media"
       - key: ALLOWED_HOSTS
         value: "onmarket-3.onrender.com,onmarket-backend.onrender.com"
       - key: CORS_ALLOW_ALL_ORIGINS
