@@ -20,6 +20,7 @@ def main():
         username=USERNAME,
         defaults={
             "email": EMAIL,
+            "role": User.ROLE_ADMIN,
             "is_staff": True,
             "is_superuser": True,
         },
@@ -27,6 +28,7 @@ def main():
 
     if not created:
         user.email = EMAIL
+        user.role = User.ROLE_ADMIN
         user.is_staff = True
         user.is_superuser = True
 
