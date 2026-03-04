@@ -4,7 +4,7 @@ services:
     env: python
     region: oregon
     buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && python manage.py migrate && gunicorn online_shop.wsgi:application --workers 2 --bind 0.0.0.0:$PORT
+    startCommand: cd backend && python manage.py collectstatic --noinput && python manage.py migrate && gunicorn online_shop.wsgi:application --workers 2 --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: "3.11"

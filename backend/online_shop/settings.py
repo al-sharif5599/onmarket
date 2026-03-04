@@ -5,6 +5,7 @@ Django settings for online_shop project.
 import os
 from pathlib import Path
 from datetime import timedelta
+from urllib.parse import urlparse, unquote
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,16 +78,33 @@ TEMPLATES = [
 WSGI_APPLICATION = 'online_shop.wsgi.application'
 
 # Database - PostgreSQL Configuration
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'onmarket_db'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'Al sharif'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    parsed_db = urlparse(DATABASE_URL)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": parsed_db.path.lstrip("/"),
+            "USER": unquote(parsed_db.username or ""),
+            "PASSWORD": unquote(parsed_db.password or ""),
+            "HOST": parsed_db.hostname or "",
+            "PORT": str(parsed_db.port or "5432"),
+            "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            "CONN_HEALTH_CHECKS": True,
+            "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "onmarket_db"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", "Al sharif"),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -157,3 +175,8 @@ CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
     "https://onmarket-3.onrender.com,https://onmarket-frontend.onrender.com,https://onmarket.vercel.app,http://localhost:3000",
 )
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
