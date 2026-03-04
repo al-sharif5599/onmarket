@@ -83,35 +83,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'online_shop.wsgi.application'
 
 # Database - PostgreSQL Configuration
-DATABASE_URL = os.getenv("DATABASE_URL")
-if DATABASE_URL:
-    if dj_database_url is not None:
-        DATABASES = {
-            "default": dj_database_url.parse(
-                DATABASE_URL,
-                conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
-                ssl_require=os.getenv("DB_SSL_REQUIRE", "True") == "True",
-            )
-        }
-        DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
-    else:
-        # Fallback parser so startup doesn't fail if dj-database-url isn't installed.
-        parsed_db = urlparse(DATABASE_URL)
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.postgresql",
-                "NAME": parsed_db.path.lstrip("/"),
-                "USER": unquote(parsed_db.username or ""),
-                "PASSWORD": unquote(parsed_db.password or ""),
-                "HOST": parsed_db.hostname or "",
-                "PORT": str(parsed_db.port or "5432"),
-                "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),
-                "CONN_HEALTH_CHECKS": True,
-                "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
-            }
-        }
-else:
-    DATABASES = {
+def default_db_config():
+    return {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
             "NAME": os.getenv("DB_NAME", "onmarket_db"),
@@ -119,8 +92,45 @@ else:
             "PASSWORD": os.getenv("DB_PASSWORD", "Al sharif"),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),
+            "CONN_HEALTH_CHECKS": True,
+            "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
         }
     }
+
+
+DATABASES = default_db_config()
+DATABASE_URL = (os.getenv("DATABASE_URL") or "").strip()
+if DATABASE_URL:
+    parsed = urlparse(DATABASE_URL)
+    has_supported_scheme = parsed.scheme in {"postgres", "postgresql", "pgsql"}
+    if has_supported_scheme:
+        if dj_database_url is not None:
+            try:
+                DATABASES = {
+                    "default": dj_database_url.parse(
+                        DATABASE_URL,
+                        conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+                        ssl_require=os.getenv("DB_SSL_REQUIRE", "True") == "True",
+                    )
+                }
+                DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+            except ValueError:
+                DATABASES = default_db_config()
+        else:
+            DATABASES = {
+                "default": {
+                    "ENGINE": "django.db.backends.postgresql",
+                    "NAME": parsed.path.lstrip("/"),
+                    "USER": unquote(parsed.username or ""),
+                    "PASSWORD": unquote(parsed.password or ""),
+                    "HOST": parsed.hostname or "",
+                    "PORT": str(parsed.port or "5432"),
+                    "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),
+                    "CONN_HEALTH_CHECKS": True,
+                    "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
+                }
+            }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
