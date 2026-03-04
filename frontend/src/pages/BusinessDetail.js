@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import { ordersAPI, productsAPI } from '../services/api';
+import { inferVideoMimeType } from '../utils/media';
 
 const BusinessDetail = () => {
   const { id } = useParams();
@@ -75,10 +76,17 @@ const BusinessDetail = () => {
         )}
 
         {product.video_url && (
-          <video controls style={{ width: '100%', borderRadius: '12px', marginBottom: '16px' }}>
-            <source src={product.video_url} />
-            Your browser does not support video.
-          </video>
+          <>
+            <video controls preload="metadata" style={{ width: '100%', borderRadius: '12px', marginBottom: '12px' }}>
+              <source src={product.video_url} type={inferVideoMimeType(product.video_url)} />
+              Your browser does not support this video format.
+            </video>
+            <div className="mb-3">
+              <a href={product.video_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
+                Open/Download Video
+              </a>
+            </div>
+          </>
         )}
 
         <h1 className="mb-2">{product.name}</h1>

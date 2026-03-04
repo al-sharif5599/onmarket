@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { productsAPI } from '../services/api';
+import { inferVideoMimeType } from '../utils/media';
 
 const BusinessList = () => {
   const [products, setProducts] = useState([]);
@@ -67,6 +68,11 @@ const BusinessList = () => {
                   className="business-image"
                   style={{ height: '220px' }}
                 />
+              ) : product.video_url ? (
+                <video className="business-image" style={{ height: '220px' }} controls preload="metadata">
+                  <source src={product.video_url} type={inferVideoMimeType(product.video_url)} />
+                  Your browser does not support this video format.
+                </video>
               ) : (
                 <div
                   style={{
@@ -79,7 +85,7 @@ const BusinessList = () => {
                     fontWeight: 600,
                   }}
                 >
-                  {product.video_url ? 'Video Product' : 'No Media'}
+                  No Media
                 </div>
               )}
               <div className="business-content">
