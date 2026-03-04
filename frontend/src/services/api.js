@@ -1,6 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://onmarket-3.onrender.com/api';
+const resolveApiBaseUrl = () => {
+  const raw = (process.env.REACT_APP_API_URL || 'https://onmarket-3.onrender.com/api').trim();
+  const withoutTrailingSlash = raw.replace(/\/+$/, '');
+  if (withoutTrailingSlash.endsWith('/api')) {
+    return withoutTrailingSlash;
+  }
+  return `${withoutTrailingSlash}/api`;
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -47,6 +56,24 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export const getApiErrorMessage = (error, fallback) => {
+  if (!error) return fallback;
+
+  if (!error.response) {
+    return 'Network error. Check backend URL/CORS and internet connection.';
+  }
+
+  const data = error.response.data;
+  if (typeof data === 'string' && data.trim()) {
+    return data;
+  }
+  if (data?.error) return data.error;
+  if (data?.detail) return data.detail;
+
+  const flat = Object.values(data || {}).flat().join(', ');
+  return flat || `${fallback} (HTTP ${error.response.status})`;
+};
 
 export const authAPI = {
   register: (data) => api.post('/auth/register/', data),

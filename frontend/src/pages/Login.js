@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../services/api';
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -22,7 +23,7 @@ const Login = () => {
       await login(formData.username, formData.password);
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed.');
+      setError(getApiErrorMessage(err, 'Login failed.'));
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import { getApiErrorMessage } from '../services/api';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -29,7 +30,7 @@ const Register = () => {
       await register(formData);
       navigate('/');
     } catch (err) {
-      setError(Object.values(err.response?.data || {}).flat().join(', ') || 'Registration failed.');
+      setError(getApiErrorMessage(err, 'Registration failed.'));
     } finally {
       setLoading(false);
     }
