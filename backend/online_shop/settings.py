@@ -5,7 +5,12 @@ Django settings for online_shop project.
 import os
 from pathlib import Path
 from datetime import timedelta
-import dj_database_url
+from urllib.parse import urlparse, unquote
+
+try:
+    import dj_database_url
+except ModuleNotFoundError:
+    dj_database_url = None
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,14 +85,31 @@ WSGI_APPLICATION = 'online_shop.wsgi.application'
 # Database - PostgreSQL Configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
-            ssl_require=os.getenv("DB_SSL_REQUIRE", "True") == "True",
-        )
-    }
-    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+    if dj_database_url is not None:
+        DATABASES = {
+            "default": dj_database_url.parse(
+                DATABASE_URL,
+                conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "600")),
+                ssl_require=os.getenv("DB_SSL_REQUIRE", "True") == "True",
+            )
+        }
+        DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+    else:
+        # Fallback parser so startup doesn't fail if dj-database-url isn't installed.
+        parsed_db = urlparse(DATABASE_URL)
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": parsed_db.path.lstrip("/"),
+                "USER": unquote(parsed_db.username or ""),
+                "PASSWORD": unquote(parsed_db.password or ""),
+                "HOST": parsed_db.hostname or "",
+                "PORT": str(parsed_db.port or "5432"),
+                "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "600")),
+                "CONN_HEALTH_CHECKS": True,
+                "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "require")},
+            }
+        }
 else:
     DATABASES = {
         "default": {
