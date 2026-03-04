@@ -196,10 +196,13 @@ CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
     "https://onmarket-frontend.onrender.com,https://onmarket.vercel.app,http://localhost:3000",
 )
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.vercel\.app$",
+]
 
 CSRF_TRUSTED_ORIGINS = env_list(
     "CSRF_TRUSTED_ORIGINS",
-    "https://onmarket-3.onrender.com,https://onmarket-frontend.onrender.com,https://onmarket.vercel.app,http://localhost:3000",
+    "https://onmarket-3.onrender.com,https://onmarket-frontend.onrender.com,https://onmarket.vercel.app,http://localhost:3000,https://*.vercel.app",
 )
 
 STORAGES = {
